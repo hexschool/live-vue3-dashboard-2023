@@ -88,16 +88,8 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 export default {
   props: {
-    article: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    isNew: {
-      type: Boolean,
-      default: true,
-    },
+    article: Object,
+    isNew: Boolean,
   },
   data() {
     return {
@@ -110,7 +102,7 @@ export default {
       // 參考：https://ckeditor.com/docs/ckeditor5/latest/builds/guides/integration/frameworks/vuejs-v3.html#editor
       editor: ClassicEditor,
       editorConfig: {
-        toolbar: ['heading', 'typing', 'bold', 'italic', '|', 'link'],
+        toolbar: ['heading', 'bold', 'italic', '|', 'link'],
       },
     };
   },

@@ -67,7 +67,8 @@
 
 <script>
 import { mapActions } from 'pinia'
-import { useToastMessageStore } from "../stores/toastMessage";
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import DelModal from '@/components/DelModal.vue';
 import Pagination from '@/components/Pagination.vue';
 import ProductModal from '@/components/ProductModal.vue';
@@ -110,10 +111,15 @@ export default {
         this.pushMessage({
           style: 'success',
           title: '成功取得產品資訊',
+          content: response.data.message,
         })
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '取得產品資訊失敗',
+          content: error.response.data.message,
+        })
       });
     },
     openModal(isNew, item) {
@@ -141,12 +147,20 @@ export default {
       const productComponent = this.$refs.productModal;
       this.$http[httpMethod](api, { data: this.tempProduct }).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, status);
+        this.pushMessage({
+          style: 'success',
+          title: status,
+          content: response.data.message,
+        })
         productComponent.hideModal();
         this.getProducts(this.currentPage);
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, status);
+        this.pushMessage({
+          style: 'danger',
+          title: status,
+          content: error.response.data.message,
+        })
       });
     },
     openDelProductModal(item) {
@@ -159,13 +173,21 @@ export default {
       this.isLoading = true;
       this.$http.delete(url).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, '刪除產品');
+        this.pushMessage({
+          style: 'success',
+          title: '刪除產品',
+          content: response.data.message,
+        })
         const delComponent = this.$refs.delModal;
         delComponent.hideModal();
         this.getProducts(this.currentPage);
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '刪除產品');
+        this.pushMessage({
+          style: 'danger',
+          title: '刪除產品',
+          content: error.response.data.message,
+        })
       });
     },
   },

@@ -53,16 +53,8 @@ import modalMixin from '@/mixins/modalMixin';
 
 export default {
   props: {
-    coupon: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
+    coupon: Object,
+    isNew: Boolean,
   },
   data() {
     return {

@@ -16,7 +16,6 @@ import * as AllRules from '@vee-validate/rules';
 import { localize, setLocale } from '@vee-validate/i18n';
 import zhTW from '@vee-validate/i18n/dist/locale/zh_TW.json';
 
-import $httpMessageState from '@/methods/pushMessageState';
 import { date, currency } from '@/methods/filters';
 
 import App from '@/App.vue';
@@ -48,9 +47,6 @@ app.config.globalProperties.$filters = {
   date,
   currency,
 };
-
-// 正常來說不建議太多方法掛 Global，這裡可以使用 provide 來處理
-app.config.globalProperties.$httpMessageState = $httpMessageState;
 
 app.use(pinia);
 app.use(router);

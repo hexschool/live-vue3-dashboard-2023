@@ -114,18 +114,15 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import modalMixin from '@/mixins/modalMixin';
 
 export default {
   props: {
-    product: {
-      type: Object,
-      default() { return {}; },
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
+    product: Object,
+    isNew: Boolean,
   },
   data() {
     return {
@@ -136,7 +133,6 @@ export default {
   },
   emits: ['update-product'],
   mixins: [modalMixin],
-  inject: ['emitter'],
   watch: {
     product() {
       this.tempProduct = this.product;
@@ -149,6 +145,7 @@ export default {
     },
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     uploadFile() {
       const uploadedFile = this.$refs.fileInput.files[0];
       const formData = new FormData();
@@ -161,25 +158,20 @@ export default {
         },
       }).then((response) => {
         this.status.fileUploading = false;
-        if (response.data.success) {
-          this.tempProduct.imageUrl = response.data.imageUrl;
-          this.$refs.fileInput.value = '';
-          this.emitter.emit('push-message', {
-            style: 'success',
-            title: '圖片上傳結果',
-            content: response.data.message,
-          });
-        } else {
-          this.$refs.fileInput.value = '';
-          this.emitter.emit('push-message', {
-            style: 'danger',
-            title: '圖片上傳結果',
-            content: response.data.message,
-          });
-        }
+        this.tempProduct.imageUrl = response.data.imageUrl;
+        this.$refs.fileInput.value = '';
+        this.pushMessage({
+          style: 'success',
+          title: '圖片上傳結果',
+          content: response.data.message,
+        });
       }).catch((error) => {
         this.status.fileUploading = false;
-        this.$httpMessageState(error.response, '圖片失敗');
+        this.pushMessage({
+          style: 'danger',
+          title: '圖片上傳結果',
+          content: error.response.data.message,
+        });
       });
     },
   },

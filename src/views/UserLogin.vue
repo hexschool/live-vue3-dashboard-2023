@@ -39,7 +39,9 @@
 </template>
 
 <script>
-import emitter from '@/methods/eventBus';
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import ToastMessages from '@/components/ToastMessages.vue';
 
 export default {
@@ -52,12 +54,8 @@ export default {
       user: {},
     };
   },
-  provide() {
-    return {
-      emitter,
-    };
-  },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     signIn() {
       const api = `${import.meta.env.VITE_API}/admin/signin`;
       this.isLoading = true;
@@ -68,7 +66,11 @@ export default {
         this.$router.push('/admin/products');
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '登入');
+        this.pushMessage({
+          style: 'danger',
+          title: '登入失敗',
+          content: error.response.data.message,
+        })
       });
     },
   },

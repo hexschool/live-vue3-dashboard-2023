@@ -23,19 +23,28 @@
   </nav>
 </template>
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 export default {
-  inject: ['emitter'],
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     logout() {
       const api = `${import.meta.env.VITE_API}/logout`;
       this.$http.post(api)
         .then((response) => {
-          this.$httpMessageState(response, '登出');
-          if (response.data.success) {
-            this.$router.push('/');
-          }
+          this.pushMessage({
+            style: 'success',
+            title: '登出狀態',
+            content: response.data.message,
+          })
+          this.$router.push('/');
         }).catch((error) => {
-          this.$httpMessageState(error.response, '錯誤訊息');
+          this.pushMessage({
+            style: 'danger',
+            title: '登出狀態',
+            content: error.response.data.message,
+          })
         });
     },
   },

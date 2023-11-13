@@ -59,6 +59,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import ArticleModal from '@/components/ArticleModal.vue';
 import DelModal from '@/components/DelModal.vue';
 
@@ -72,12 +75,12 @@ export default {
       currentPage: 1,
     };
   },
-  inject: ['emitter'],
   components: {
     ArticleModal,
     DelModal,
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getArticles(page = 1) {
       this.currentPage = page;
       const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/articles?page=${page}`;
@@ -92,11 +95,11 @@ export default {
         // axios 的錯誤狀態，可參考：https://github.com/axios/axios#handling-errors
         console.log('error', error.response, error.request, error.message);
         this.isLoading = false;
-        this.emitter.emit('push-message', {
-          title: '連線錯誤',
+        this.pushMessage({
+          title: '取得文章資訊失敗',
           style: 'danger',
-          content: error.message,
-        });
+          content: error.response.data.message,
+        })
       });
     },
     getArticle(id) {
@@ -104,19 +107,17 @@ export default {
       this.isLoading = true;
       this.$http.get(api).then((response) => {
         this.isLoading = false;
-        if (response.data.success) {
-          this.openModal(false, response.data.article);
-          this.isNew = false;
-        }
+        this.openModal(false, response.data.article);
+        this.isNew = false;
       }).catch((error) => {
         // axios 的錯誤狀態，可參考：https://github.com/axios/axios#handling-errors
         console.log('error', error.response, error.request, error.message);
         this.isLoading = false;
-        this.emitter.emit('push-message', {
-          title: '連線錯誤',
+        this.pushMessage({
+          title: '取得文章資訊失敗',
           style: 'danger',
-          content: error.message,
-        });
+          content: error.response.data.message,
+        })
       });
     },
     openModal(isNew, item) {
@@ -147,12 +148,20 @@ export default {
       const articleComponent = this.$refs.articleModal;
       this.$http[httpMethod](api, { data: this.tempArticle }).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, status);
+        this.pushMessage({
+          style: 'success',
+          title: status,
+          content: response.data.message,
+        })
         articleComponent.hideModal();
         this.getArticles(this.currentPage);
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: status,
+          content: error.response.data.message,
+        })
       });
     },
     openDelArticleModal(item) {
@@ -165,13 +174,21 @@ export default {
       this.isLoading = true;
       this.$http.delete(url).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, '刪除貼文');
+        this.pushMessage({
+          style: 'success',
+          title: '刪除貼文',
+          content: response.data.message,
+        })
         const delComponent = this.$refs.delModal;
         delComponent.hideModal();
         this.getArticles(this.currentPage);
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '刪除貼文');
+        this.pushMessage({
+          style: 'danger',
+          title: '刪除貼文',
+          content: error.response.data.message,
+        })
       });
     },
   },

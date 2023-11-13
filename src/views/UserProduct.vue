@@ -36,6 +36,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 export default {
   data() {
     return {
@@ -45,13 +48,12 @@ export default {
     };
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getProduct() {
       const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/product/${this.id}`;
       this.isLoading = true;
       this.$http.get(api).then((response) => {
-        if (response.data.success) {
-          this.product = response.data.product;
-        }
+        this.product = response.data.product;
         this.isLoading = false;
       });
     },
@@ -64,11 +66,19 @@ export default {
       this.isLoading = true;
       this.$http.post(url, { data: cart }).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, '加入購物車');
+        this.pushMessage({
+          style: 'success',
+          title: '成功加入購物車',
+          content: response.data.message,
+        })
         this.$router.push('/user/cart');
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '加入購物車');
+        this.pushMessage({
+          style: 'danger',
+          title: '加入購物車失敗',
+          content: error.response.data.message,
+        })
       });
     },
   },

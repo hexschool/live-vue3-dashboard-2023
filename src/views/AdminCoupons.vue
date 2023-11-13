@@ -45,23 +45,11 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import CouponModal from '@/components/CouponModal.vue';
 import DelModal from '@/components/DelModal.vue';
-
-// function pushMessageState(response, title = '更新') {
-//   if (response.data.success) {
-//     this.emitter.emit('push-message', {
-//       style: 'success',
-//       title: `${title}成功`,
-//     });
-//   } else {
-//     this.emitter.emit('push-message', {
-//       style: 'danger',
-//       title: `${title}失敗`,
-//       content: response.data.message.join('、'),
-//     });
-//   }
-// }
 
 export default {
   components: { CouponModal, DelModal },
@@ -82,6 +70,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     openCouponModal(isNew, item) {
       this.isNew = isNew;
       if (this.isNew) {
@@ -106,7 +95,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'success',
+          title: '取得優惠券',
+          content: error.response.data.message,
+        })
       });
     },
     updateCoupon(tempCoupon) {
@@ -123,12 +116,20 @@ export default {
 
       this.$http[httpMethos](url, { data }).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, '新增優惠券');
+        this.pushMessage({
+          style: 'success',
+          title: '新增優惠券',
+          content: response.data.message,
+        })
         this.getCoupons();
         this.$refs.couponModal.hideModal();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '新增優惠券',
+          content: error.response.data.message,
+        })
       });
     },
     delCoupon() {
@@ -136,13 +137,21 @@ export default {
       this.isLoading = true;
       this.$http.delete(url).then((response) => {
         this.isLoading = false;
-        this.$httpMessageState(response, '刪除優惠券');
+        this.pushMessage({
+          style: 'success',
+          title: '刪除優惠券',
+          content: response.data.message,
+        })
         const delComponent = this.$refs.delModal;
         delComponent.hideModal();
         this.getCoupons();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '刪除優惠券');
+        this.pushMessage({
+          style: 'danger',
+          title: '刪除優惠券',
+          content: error.response.data.message,
+        })
       });
     },
   },

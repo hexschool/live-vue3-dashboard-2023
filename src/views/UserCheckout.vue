@@ -58,6 +58,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 export default {
   data() {
     return {
@@ -68,6 +71,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getOrder() {
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order/${this.orderId}`;
       this.isLoading = true;
@@ -76,7 +80,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '取得訂單失敗',
+          content: error.response.data.message,
+        })
       });
     },
     payOrder() {
@@ -87,7 +95,11 @@ export default {
         this.getOrder();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '付款失敗',
+          content: error.response.data.message,
+        })
       });
     },
   },

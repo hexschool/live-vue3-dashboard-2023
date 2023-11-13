@@ -7,7 +7,9 @@
 </template>
 
 <script>
-import emitter from '@/methods/eventBus';
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import ToastMessages from '@/components/ToastMessages.vue';
 import NavbarLayout from '@/components/NavbarLayout.vue';
 
@@ -18,10 +20,8 @@ export default {
       status: false,
     };
   },
-  provide() {
-    return {
-      emitter,
-    };
+  methods:{
+    ...mapActions(useToastMessageStore, ['pushMessage']),
   },
   created() {
     const token = document.cookie.replace(/(?:(?:^|.*;\s*)hexToken\s*=\s*([^;]*).*$)|^.*$/, '$1');
@@ -29,11 +29,19 @@ export default {
     const api = `${import.meta.env.VITE_API}/api/user/check`;
     this.$http.post(api)
       .then((response) => {
-        this.$httpMessageState(response, '登入');
+        this.pushMessage({
+          style: 'success',
+          title: '成功登入',
+          content: response.data.message
+        })
         this.status = true;
       }).catch((error) => {
+        this.pushMessage({
+          style: 'danger',
+          title: '錯誤訊息',
+          content: error.response.data.message
+        })
         this.$router.push('/');
-        this.$httpMessageState(error.response, '錯誤訊息');
       });
   },
 };

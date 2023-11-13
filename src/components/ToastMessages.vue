@@ -18,34 +18,11 @@ import { mapActions, mapState } from 'pinia'
 import { useToastMessageStore } from "@/stores/toastMessage";
 
 export default {
-  // data() {
-  //   return {
-  //     messages: [],
-  //   };
-  // },
-  // inject: ['emitter'],
-  // methods: {
-  //   toastShow() {
-  //     setTimeout(() => {
-  //       this.messages.shift();
-  //     }, 6000);
-  //   },
-  //   clearToast(index) {
-  //     this.messages.splice(index, 1);
-  //   },
-  // },
   computed: {
     ...mapState(useToastMessageStore, ['messages'])
   },
   methods: {
     ...mapActions(useToastMessageStore, ['clearToast'])
   }
-  // mounted() {
-  //   this.emitter.on('push-message', (message) => {
-  //     const { style = 'success', title, content } = message;
-  //     this.messages.push({ style, title, content });
-  //     this.toastShow();
-  //   });
-  // },
 };
 </script>

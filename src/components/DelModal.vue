@@ -23,28 +23,13 @@
   </div>
 </template>
 <script>
-import BsModal from 'bootstrap/js/dist/modal';
+import modalMixin from '@/mixins/modalMixin';
 
 export default {
   props: {
     item: {},
   },
-  data() {
-    return {
-      modal: '',
-    };
-  },
   emits: ['del-item'],
-  methods: {
-    openModal() {
-      this.modal.show();
-    },
-    hideModal() {
-      this.modal.hide();
-    },
-  },
-  mounted() {
-    this.modal = new BsModal(this.$refs.modal);
-  },
+  mixins: [modalMixin],
 };
 </script>

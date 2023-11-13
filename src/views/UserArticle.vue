@@ -1,4 +1,5 @@
 <template>
+  <VueLoading :active="isLoading" :z-index="1060" />
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
@@ -25,6 +26,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 export default {
   data() {
     return {
@@ -33,6 +37,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getArticle() {
       const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/article/${this.id}`;
       this.isLoading = true;
@@ -41,7 +46,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '取得文章資訊失敗',
+          content: error.response.data.message,
+        })
       });
     },
   },

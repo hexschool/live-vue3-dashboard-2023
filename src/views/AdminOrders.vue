@@ -76,6 +76,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 import DelModal from '@/components/DelModal.vue';
 import OrderModal from '@/components/OrderModal.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -97,6 +100,7 @@ export default {
     OrderModal,
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getOrders(currentPage = 1) {
       this.currentPage = currentPage;
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/orders?page=${currentPage}`;
@@ -107,7 +111,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '錯誤訊息',
+          content: error.response.data.message,
+        })
       });
     },
     openModal(item) {
@@ -131,11 +139,22 @@ export default {
         this.isLoading = false;
         const orderComponent = this.$refs.orderModal;
         orderComponent.hideModal();
+
+        this.pushMessage({
+          style: 'success',
+          title: '更新付款狀態',
+          content: response.data.message,
+        })
+
         this.getOrders(this.currentPage);
-        this.$httpMessageState(response, '更新付款狀態');
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+
+        this.pushMessage({
+          style: 'danger',
+          title: '錯誤訊息',
+          content: error.response.data.message,
+        })
       });
     },
     delOrder() {
@@ -143,12 +162,18 @@ export default {
       this.isLoading = true;
       this.$http.delete(url).then(() => {
         this.isLoading = false;
+
         const delComponent = this.$refs.delModal;
         delComponent.hideModal();
+
         this.getOrders(this.currentPage);
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '錯誤訊息',
+          content: error.response.data.message,
+        })
       });
     },
   },

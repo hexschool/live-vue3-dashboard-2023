@@ -157,6 +157,9 @@
 </template>
 
 <script>
+import { mapActions } from 'pinia'
+import { useToastMessageStore } from "@/stores/toastMessage";
+
 export default {
   data() {
     return {
@@ -180,6 +183,7 @@ export default {
     };
   },
   methods: {
+    ...mapActions(useToastMessageStore, ['pushMessage']),
     getProducts() {
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/products`;
       this.isLoading = true;
@@ -188,7 +192,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '取得產品資訊失敗',
+          content: error.response.data.message,
+        })
       });
     },
     getProduct(id) {
@@ -206,23 +214,39 @@ export default {
       this.$http.post(url, { data: cart }).then((response) => {
         this.status.loadingItem = '';
         this.isLoading = false;
-        this.$httpMessageState(response, '加入購物車');
+        this.pushMessage({
+          style: 'success',
+          title: '成功加入購物車',
+          content: response.data.message,
+        })
         this.getCart();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '加入購物車失敗',
+          content: error.response.data.message,
+        })
       });
     },
     deleteAllCarts() {
       this.isLoading = true;
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/carts`;
       this.$http.delete(url).then((response) => {
-        this.$httpMessageState(response, '清除購物車');
+        this.pushMessage({
+          style: 'success',
+          title: '清除購物車',
+          content: response.data.message,
+        })
         this.getCart();
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '清除購物車');
+        this.pushMessage({
+          style: 'danger',
+          title: '清除購物車',
+          content: error.response.data.message,
+        })
       });
     },
     getCart() {
@@ -233,7 +257,11 @@ export default {
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
+        this.pushMessage({
+          style: 'danger',
+          title: '取得購物車資訊',
+          content: error.response.data.message,
+        })
       });
     },
     removeCartItem(id) {
@@ -241,13 +269,21 @@ export default {
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart/${id}`;
       this.isLoading = true;
       this.$http.delete(url).then((response) => {
-        this.$httpMessageState(response, '移除購物車品項');
+        this.pushMessage({
+          style: 'success',
+          title: '移除購物車品項',
+          content: response.data.message,
+        })
         this.status.loadingItem = '';
         this.isLoading = false;
         this.getCart();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '移除購物車品項');
+        this.pushMessage({
+          style: 'danger',
+          title: '移除購物車品項',
+          content: error.response.data.message,
+        })
       });
     },
     updateCart(data) {
@@ -259,12 +295,20 @@ export default {
       };
 
       this.$http.put(url, { data: cart }).then((response) => {
-        this.$httpMessageState(response, '更新購物車');
+        this.pushMessage({
+          style: 'success',
+          title: '更新購物車',
+          content: response.data.message,
+        })
         this.isLoading = false;
         this.getCart();
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '更新購物車');
+        this.pushMessage({
+          style: 'danger',
+          title: '更新購物車',
+          content: error.response.data.message,
+        })
       });
     },
     addCouponCode() {
@@ -274,12 +318,20 @@ export default {
       };
       this.isLoading = true;
       this.$http.post(url, { data: coupon }).then((response) => {
-        this.$httpMessageState(response, '加入優惠券');
+        this.pushMessage({
+          style: 'success',
+          title: '加入優惠券',
+          content: response.data.message,
+        })
         this.getCart();
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '加入優惠券');
+        this.pushMessage({
+          style: 'danger',
+          title: '加入優惠券',
+          content: error.response.data.message,
+        })
       });
     },
     createOrder() {
@@ -287,13 +339,16 @@ export default {
       const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order`;
       const order = this.form;
       this.$http.post(url, { data: order }).then((response) => {
-        this.$httpMessageState(response, '建立訂單');
         this.$router.push(`/user/checkout/${response.data.orderId}`);
         this.$refs.form.resetForm();
         this.isLoading = false;
       }).catch((error) => {
         this.isLoading = false;
-        this.$httpMessageState(error.response, '建立訂單');
+        this.pushMessage({
+          style: 'danger',
+          title: '建立訂單',
+          content: error.response.data.message,
+        })
       });
     },
   },

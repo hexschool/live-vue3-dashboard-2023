@@ -1,3 +1,45 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+import ToastMessages from '@/components/ToastMessages.vue';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const router = useRouter();
+
+const user = ref({
+  username: '',
+  password: '',
+});
+
+const isLoading = ref(false);
+
+const signIn = () => {
+  const api = `${import.meta.env.VITE_API}/admin/signin`;
+  isLoading.value = true;
+  axios.post(api, user.value).then((response) => {
+    const { token, expired } = response.data;
+    document.cookie = `hexToken=${token};expires=${new Date(expired)};`;
+    isLoading.value = false;
+    router.push('/admin/products');
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '登入訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+</script>
+
+
 <template>
   <div class="container mt-5">
     <VueLoading :active="isLoading" :z-index="1060" />
@@ -37,40 +79,3 @@
     </form>
   </div>
 </template>
-
-<script>
-import emitter from '@/methods/eventBus';
-import ToastMessages from '@/components/ToastMessages.vue';
-
-export default {
-  components: {
-    ToastMessages,
-  },
-  data() {
-    return {
-      isLoading: false,
-      user: {},
-    };
-  },
-  provide() {
-    return {
-      emitter,
-    };
-  },
-  methods: {
-    signIn() {
-      const api = `${import.meta.env.VITE_API}/admin/signin`;
-      this.isLoading = true;
-      this.$http.post(api, this.user).then((response) => {
-        const { token, expired } = response.data;
-        document.cookie = `hexToken=${token};expires=${new Date(expired)};`;
-        this.isLoading = false;
-        this.$router.push('/admin/products');
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '登入');
-      });
-    },
-  },
-};
-</script>

@@ -1,3 +1,101 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+
+import DelModal from '@/components/DelModal.vue';
+import OrderModal from '@/components/OrderModal.vue';
+import Pagination from '@/components/Pagination.vue';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const orderModalRef = ref(null);
+const delModalRef = ref(null);
+
+const orders = ref({});
+const isNew = ref(false);
+const pagination = ref({});
+const isLoading = ref(false);
+const tempOrder = ref({});
+const tempProduct = ref({});
+const currentPage = ref(1);
+
+const getOrders = (currentPage = 1) => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/orders?page=${currentPage}`;
+  isLoading.value = true;
+  axios.get(url, tempProduct).then((response) => {
+    orders.value = response.data.orders;
+    pagination.value = response.data.pagination;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const openModal = (item) => {
+  tempOrder.value = { ...item };
+  isNew.value = false;
+  orderModalRef.value.openModal();
+};
+
+const openDelOrderModal = (item) => {
+  tempOrder.value = { ...item };
+  delModalRef.value.openModal();
+};
+
+const updatePaid = (item) => {
+  const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/order/${item.id}`;
+  const paid = {
+    is_paid: item.is_paid,
+  };
+  isLoading.value = true;
+  axios.put(api, { data: paid }).then((response) => {
+    isLoading.value = false;
+    orderModalRef.value.hideModal();
+    getOrders(currentPage.value);
+    pushMessage({
+      style: 'success',
+      title: '更新付款狀態',
+      content: response.data.message,
+    })
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const delOrder = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/order/${tempOrder.value.id}`;
+  isLoading.value = true;
+  axios.delete(url).then(() => {
+    isLoading.value = false;
+    delModalRef.value.hideModal();
+    getOrders(currentPage.value);
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getOrders();
+</script>
+
 <template>
   <VueLoading :active="isLoading" :z-index="1060" />
   <table class="table mt-4">
@@ -64,96 +162,14 @@
   </table>
   <OrderModal
     :order="tempOrder"
-    ref="orderModal"
+    ref="orderModalRef"
     @update-paid="updatePaid"
   />
   <DelModal
     :item="tempOrder"
-    ref="delModal"
+    ref="delModalRef"
     @del-item="delOrder"
   />
   <Pagination :pages="pagination" @emitPages="getOrders" />
 </template>
 
-<script>
-import DelModal from '@/components/DelModal.vue';
-import OrderModal from '@/components/OrderModal.vue';
-import Pagination from '@/components/Pagination.vue';
-
-export default {
-  data() {
-    return {
-      orders: {},
-      isNew: false,
-      pagination: {},
-      isLoading: false,
-      tempOrder: {},
-      currentPage: 1,
-    };
-  },
-  components: {
-    Pagination,
-    DelModal,
-    OrderModal,
-  },
-  methods: {
-    getOrders(currentPage = 1) {
-      this.currentPage = currentPage;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/orders?page=${currentPage}`;
-      this.isLoading = true;
-      this.$http.get(url, this.tempProduct).then((response) => {
-        this.orders = response.data.orders;
-        this.pagination = response.data.pagination;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    openModal(item) {
-      this.tempOrder = { ...item };
-      this.isNew = false;
-      const orderComponent = this.$refs.orderModal;
-      orderComponent.openModal();
-    },
-    openDelOrderModal(item) {
-      this.tempOrder = { ...item };
-      const delComponent = this.$refs.delModal;
-      delComponent.openModal();
-    },
-    updatePaid(item) {
-      this.isLoading = true;
-      const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/order/${item.id}`;
-      const paid = {
-        is_paid: item.is_paid,
-      };
-      this.$http.put(api, { data: paid }).then((response) => {
-        this.isLoading = false;
-        const orderComponent = this.$refs.orderModal;
-        orderComponent.hideModal();
-        this.getOrders(this.currentPage);
-        this.$httpMessageState(response, '更新付款狀態');
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    delOrder() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/order/${this.tempOrder.id}`;
-      this.isLoading = true;
-      this.$http.delete(url).then(() => {
-        this.isLoading = false;
-        const delComponent = this.$refs.delModal;
-        delComponent.hideModal();
-        this.getOrders(this.currentPage);
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-  },
-  created() {
-    this.getOrders();
-  },
-};
-</script>

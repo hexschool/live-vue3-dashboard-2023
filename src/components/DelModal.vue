@@ -1,6 +1,24 @@
+<script setup>
+import useModal from "@/hooks/useModal";
+
+const { openModal, hideModal, modalRef } = useModal()
+
+const props = defineProps({
+  item: Object
+});
+
+const emits = defineEmits(['del-item']);
+
+defineExpose({
+  openModal,
+  hideModal,
+})
+</script>
+
+
 <template>
   <div class="modal fade" id="delModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true"
-    ref="modal">
+    ref="modalRef">
     <div class="modal-dialog" role="document">
       <div class="modal-content border-0">
         <div class="modal-header bg-danger text-white">
@@ -15,36 +33,10 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消
           </button>
-          <button type="button" class="btn btn-danger" @click="$emit('del-item')">確認刪除
+          <button type="button" class="btn btn-danger" @click="emits('del-item')">確認刪除
           </button>
         </div>
       </div>
     </div>
   </div>
 </template>
-<script>
-import BsModal from 'bootstrap/js/dist/modal';
-
-export default {
-  props: {
-    item: {},
-  },
-  data() {
-    return {
-      modal: '',
-    };
-  },
-  emits: ['del-item'],
-  methods: {
-    openModal() {
-      this.modal.show();
-    },
-    hideModal() {
-      this.modal.hide();
-    },
-  },
-  mounted() {
-    this.modal = new BsModal(this.$refs.modal);
-  },
-};
-</script>

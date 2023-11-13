@@ -1,3 +1,122 @@
+<script setup>
+import axios from 'axios';
+
+import { ref } from 'vue';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import DelModal from '@/components/DelModal.vue';
+import Pagination from '@/components/Pagination.vue';
+import ProductModal from '@/components/ProductModal.vue';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const products = ref([]);
+const pagination = ref({});
+const tempProduct = ref({});
+const isNew = ref(false);
+const isLoading = ref(false);
+
+const productModalRef = ref(null);
+const delModalRef = ref(null);
+
+const getProducts = (page = 1) => {
+  const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/products?page=${page}`;
+  isLoading.value = true;
+  axios.get(api).then((response) => {
+    products.value = response.data.products;
+    pagination.value = response.data.pagination;
+
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '成功取得產品資訊',
+      content: '已成功取得產品資訊',
+    })
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const openModal = (status, item) => {
+  if (status) {
+    tempProduct.value = {};
+    isNew.value = true;
+  } else {
+    tempProduct.value = { ...item };
+    isNew.value = false;
+  }
+
+  productModalRef.value.openModal();
+};
+
+const updateProduct = (item) => {
+  tempProduct.value = item;
+  let api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product`;
+  isLoading.value = true;
+  let httpMethod = 'post';
+  let status = '新增產品';
+  if (!isNew.value) {
+    api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product/${tempProduct.value.id}`;
+    httpMethod = 'put';
+    status = '更新產品';
+  }
+  productModalRef.value.hideModal();
+  axios[httpMethod](api, { data: tempProduct.value }).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: status,
+      content: response.data.message,
+    })
+    getProducts();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const openDelProductModal = (item) => {
+  tempProduct.value = { ...item };
+  delModalRef.value.openModal();
+};
+
+const delProduct = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product/${tempProduct.value.id}`;
+  isLoading.value = true;
+  axios.delete(url).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '刪除產品',
+      content: response.data.message,
+    })
+    delModalRef.value.hideModal();
+    getProducts();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getProducts();
+
+</script>
+
 <template>
   <div>
     <VueLoading :active="isLoading" :z-index="1060" />
@@ -58,119 +177,9 @@
       @update-product="updateProduct"
       :product="tempProduct"
       :isNew="isNew"
-      ref="productModal"
+      ref="productModalRef"
     />
     <!-- DelModal -->
-    <DelModal :item="tempProduct" ref="delModal" @del-item="delProduct" />
+    <DelModal :item="tempProduct" ref="delModalRef" @del-item="delProduct" />
   </div>
 </template>
-
-<script>
-import { mapActions } from 'pinia'
-import { useToastMessageStore } from "../stores/toastMessage";
-import DelModal from '@/components/DelModal.vue';
-import Pagination from '@/components/Pagination.vue';
-import ProductModal from '@/components/ProductModal.vue';
-
-export default {
-  data() {
-    return {
-      products: [],
-      pagination: {},
-      tempProduct: {},
-      isNew: false,
-      isLoading: false,
-      status: {
-        fileUploading: false,
-      },
-      modal: {
-        editModal: '',
-        delModal: '',
-      },
-      currentPage: 1,
-    };
-  },
-  components: {
-    ProductModal,
-    DelModal,
-    Pagination,
-  },
-  methods: {
-    // 可以使用 mapAction 取得 Pinia 的方法
-    ...mapActions(useToastMessageStore, ['pushMessage']),
-    getProducts(page = 1) {
-      this.currentPage = page;
-      const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/products?page=${page}`;
-      this.isLoading = true;
-      this.$http.get(api).then((response) => {
-        this.products = response.data.products;
-        this.pagination = response.data.pagination;
-        this.isLoading = false;
-        // 在此可以搭配 Pinia 發送成功資訊
-        this.pushMessage({
-          style: 'success',
-          title: '成功取得產品資訊',
-        })
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    openModal(isNew, item) {
-      if (isNew) {
-        this.tempProduct = {};
-        this.isNew = true;
-      } else {
-        this.tempProduct = { ...item };
-        this.isNew = false;
-      }
-      const productComponent = this.$refs.productModal;
-      productComponent.openModal();
-    },
-    updateProduct(item) {
-      this.tempProduct = item;
-      let api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product`;
-      this.isLoading = true;
-      let httpMethod = 'post';
-      let status = '新增產品';
-      if (!this.isNew) {
-        api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product/${this.tempProduct.id}`;
-        httpMethod = 'put';
-        status = '更新產品';
-      }
-      const productComponent = this.$refs.productModal;
-      this.$http[httpMethod](api, { data: this.tempProduct }).then((response) => {
-        this.isLoading = false;
-        this.$httpMessageState(response, status);
-        productComponent.hideModal();
-        this.getProducts(this.currentPage);
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, status);
-      });
-    },
-    openDelProductModal(item) {
-      this.tempProduct = { ...item };
-      const delComponent = this.$refs.delModal;
-      delComponent.openModal();
-    },
-    delProduct() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/product/${this.tempProduct.id}`;
-      this.isLoading = true;
-      this.$http.delete(url).then((response) => {
-        this.isLoading = false;
-        this.$httpMessageState(response, '刪除產品');
-        const delComponent = this.$refs.delModal;
-        delComponent.hideModal();
-        this.getProducts(this.currentPage);
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '刪除產品');
-      });
-    },
-  },
-  created() {
-    this.getProducts();
-  },
-};
-</script>

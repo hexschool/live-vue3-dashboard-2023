@@ -1,3 +1,123 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+
+import CouponModal from '@/components/CouponModal.vue';
+import DelModal from '@/components/DelModal.vue';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const props = defineProps({
+  config: Object,
+});
+
+const couponModalRef = ref(null);
+const delModalRef = ref(null);
+
+const coupons = ref({});
+const tempCoupon = ref({
+  title: '',
+  is_enabled: 0,
+  percent: 100,
+  code: '',
+});
+const isNew = ref(false);
+const isLoading = ref(false);
+
+const openCouponModal = (status, item) => {
+  isNew.value = status;
+  if (isNew.value) {
+    tempCoupon.value = {
+      due_date: new Date().getTime() / 1000,
+    };
+  } else {
+    tempCoupon.value = { ...item };
+  }
+  couponModalRef.value.openModal();
+};
+
+const openDelCouponModal = (item) => {
+  tempCoupon.value = { ...item };
+  delModalRef.value.openModal();
+};
+
+const getCoupons = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupons`;
+  isLoading.value = true;
+  axios.get(url).then((response) => {
+    coupons.value = response.data.coupons;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const updateCoupon = (tempCoupon) => {
+  isLoading.value = true;
+  let url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon`;
+  let httpMethos = 'post';
+  let data = tempCoupon;
+
+  if (!isNew.value) {
+    url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon/${tempCoupon.id}`;
+    httpMethos = 'put';
+    data = tempCoupon;
+  }
+
+  axios[httpMethos](url, { data }).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '新增優惠券',
+      content: response.data.message,
+    })
+    getCoupons();
+    couponModalRef.value.hideModal();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const delCoupon = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon/${tempCoupon.value.id}`;
+  isLoading.value = true;
+  axios.delete(url).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '刪除優惠券',
+      content: response.data.message,
+    })
+    const delComponent = delModalRef.value;
+    delComponent.hideModal();
+    getCoupons();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '刪除優惠券',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getCoupons();
+</script>
+
 <template>
   <div>
     <VueLoading :active="isLoading" :z-index="1060" />
@@ -27,10 +147,10 @@
         </td>
         <td>
           <div class="btn-group">
-            <button class="btn btn-outline-primary btn-sm"
+            <button type="button" class="btn btn-outline-primary btn-sm"
                     @click="openCouponModal(false, item)"
             >編輯</button>
-            <button class="btn btn-outline-danger btn-sm"
+            <button type="button" class="btn btn-outline-danger btn-sm"
                     @click="openDelCouponModal(item)"
             >刪除</button>
           </div>
@@ -38,116 +158,9 @@
       </tr>
       </tbody>
     </table>
-    <CouponModal :coupon="tempCoupon" :is-new="isNew" ref="couponModal"
+    <CouponModal :coupon="tempCoupon" :is-new="isNew" ref="couponModalRef"
     @update-coupon="updateCoupon"/>
-    <DelModal :item="tempCoupon" ref="delModal" @del-item="delCoupon"/>
+    <DelModal :item="tempCoupon" ref="delModalRef" @del-item="delCoupon"/>
   </div>
 </template>
 
-<script>
-import CouponModal from '@/components/CouponModal.vue';
-import DelModal from '@/components/DelModal.vue';
-
-// function pushMessageState(response, title = '更新') {
-//   if (response.data.success) {
-//     this.emitter.emit('push-message', {
-//       style: 'success',
-//       title: `${title}成功`,
-//     });
-//   } else {
-//     this.emitter.emit('push-message', {
-//       style: 'danger',
-//       title: `${title}失敗`,
-//       content: response.data.message.join('、'),
-//     });
-//   }
-// }
-
-export default {
-  components: { CouponModal, DelModal },
-  props: {
-    config: Object,
-  },
-  data() {
-    return {
-      coupons: {},
-      tempCoupon: {
-        title: '',
-        is_enabled: 0,
-        percent: 100,
-        code: '',
-      },
-      isLoading: false,
-      isNew: false,
-    };
-  },
-  methods: {
-    openCouponModal(isNew, item) {
-      this.isNew = isNew;
-      if (this.isNew) {
-        this.tempCoupon = {
-          due_date: new Date().getTime() / 1000,
-        };
-      } else {
-        this.tempCoupon = { ...item };
-      }
-      this.$refs.couponModal.openModal();
-    },
-    openDelCouponModal(item) {
-      this.tempCoupon = { ...item };
-      const delComponent = this.$refs.delModal;
-      delComponent.openModal();
-    },
-    getCoupons() {
-      this.isLoading = true;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupons`;
-      this.$http.get(url, this.tempProduct).then((response) => {
-        this.coupons = response.data.coupons;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    updateCoupon(tempCoupon) {
-      this.isLoading = true;
-      let url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon`;
-      let httpMethos = 'post';
-      let data = tempCoupon;
-
-      if (!this.isNew) {
-        url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon/${this.tempCoupon.id}`;
-        httpMethos = 'put';
-        data = this.tempCoupon;
-      }
-
-      this.$http[httpMethos](url, { data }).then((response) => {
-        this.isLoading = false;
-        this.$httpMessageState(response, '新增優惠券');
-        this.getCoupons();
-        this.$refs.couponModal.hideModal();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    delCoupon() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/coupon/${this.tempCoupon.id}`;
-      this.isLoading = true;
-      this.$http.delete(url).then((response) => {
-        this.isLoading = false;
-        this.$httpMessageState(response, '刪除優惠券');
-        const delComponent = this.$refs.delModal;
-        delComponent.hideModal();
-        this.getCoupons();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '刪除優惠券');
-      });
-    },
-  },
-  created() {
-    this.getCoupons();
-  },
-};
-</script>

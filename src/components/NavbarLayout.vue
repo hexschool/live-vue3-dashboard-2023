@@ -1,3 +1,36 @@
+<script setup>
+import axios from 'axios';
+
+import { useRouter } from 'vue-router';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const router = useRouter();
+
+const logout = () => {
+  const api = `${import.meta.env.VITE_API}/logout`;
+  axios.post(api)
+    .then((response) => {
+      pushMessage({
+        style: 'success',
+        title: '登出成功',
+        content: response.data.message,
+      })
+      router.push('/');
+    }).catch((error) => {
+      pushMessage({
+        style: 'danger',
+        title: '登出失敗',
+        content: error.response.data.message,
+      })
+    });
+};
+
+</script>
+
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
@@ -22,22 +55,3 @@
     </div>
   </nav>
 </template>
-<script>
-export default {
-  inject: ['emitter'],
-  methods: {
-    logout() {
-      const api = `${import.meta.env.VITE_API}/logout`;
-      this.$http.post(api)
-        .then((response) => {
-          this.$httpMessageState(response, '登出');
-          if (response.data.success) {
-            this.$router.push('/');
-          }
-        }).catch((error) => {
-          this.$httpMessageState(error.response, '錯誤訊息');
-        });
-    },
-  },
-};
-</script>

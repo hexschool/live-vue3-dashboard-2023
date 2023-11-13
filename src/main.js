@@ -2,12 +2,7 @@ import { createApp } from 'vue';
 
 import { createPinia } from 'pinia';
 
-import axios from 'axios';
-import VueAxios from 'vue-axios';
-
 import Loading from 'vue-loading-overlay';
-
-import CKEditor from '@ckeditor/ckeditor5-vue';
 
 import {
   Form, Field, ErrorMessage, defineRule, configure,
@@ -16,12 +11,10 @@ import * as AllRules from '@vee-validate/rules';
 import { localize, setLocale } from '@vee-validate/i18n';
 import zhTW from '@vee-validate/i18n/dist/locale/zh_TW.json';
 
-import $httpMessageState from '@/methods/pushMessageState';
 import { date, currency } from '@/methods/filters';
 
 import App from '@/App.vue';
 import router from '@/router';
-
 
 /**
  * 這裡是將所有 vee-validate 的規則載入
@@ -49,13 +42,8 @@ app.config.globalProperties.$filters = {
   currency,
 };
 
-// 正常來說不建議太多方法掛 Global，這裡可以使用 provide 來處理
-app.config.globalProperties.$httpMessageState = $httpMessageState;
-
 app.use(pinia);
 app.use(router);
-app.use(VueAxios, axios);
-app.use(CKEditor);
 
 app.component('VueLoading', Loading);
 app.component('VeeForm', Form);

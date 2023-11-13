@@ -1,6 +1,224 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const router = useRouter();
+
+const products = ref([]);
+const product = ref({});
+const status = ref({
+  loadingItem: '',
+});
+
+const formRef = ref(null);
+
+const form = ref({
+  user: {
+    name: '',
+    email: '',
+    tel: '',
+    address: '',
+  },
+  message: '',
+});
+const cart = ref({});
+const isLoading = ref(false);
+const coupon_code = ref('');
+
+const getProducts = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/products`;
+  isLoading.value = true;
+  axios.get(url).then((response) => {
+    products.value = response.data.products;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const getProduct = (id) => {
+  router.push(`/user/product/${id}`);
+};
+
+const addToCart = (id, qty = 1) => {
+  isLoading.value = true;
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
+  status.value.loadingItem = id;
+  const cart = {
+    product_id: id,
+    qty,
+  };
+
+  axios.post(url, { data: cart }).then((response) => {
+    status.value.loadingItem = '';
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '加入購物車',
+      content: response.data.message,
+    })
+    getCart();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '加入購物車',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const deleteAllCarts = () => {
+  isLoading.value = true;
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/carts`;
+  axios.delete(url).then((response) => {
+    pushMessage({
+      style: 'success',
+      title: '清除購物車',
+      content: response.data.message,
+    })
+    getCart();
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '清除購物車',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const getCart = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
+  isLoading.value = true;
+  axios.get(url).then((response) => {
+    cart.value = response.data.data;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const removeCartItem = (id) => {
+  status.value.loadingItem = id;
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart/${id}`;
+  isLoading.value = true;
+  axios.delete(url).then((response) => {
+    pushMessage({
+      style: 'success',
+      title: '移除購物車品項',
+      content: response.data.message,
+    })
+    status.value.loadingItem = '';
+    isLoading.value = false;
+    getCart();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '移除購物車品項',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const updateCart = (data) => {
+  isLoading.value = true;
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart/${data.id}`;
+  const cart = {
+    product_id: data.product_id,
+    qty: data.qty,
+  };
+
+  axios.put(url, { data: cart }).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '更新購物車',
+      content: response.data.message,
+    })
+    getCart();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '更新購物車',
+      content: error.response.data.message,
+    })
+  });
+}
+
+const addCouponCode = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/coupon`;
+  const coupon = {
+    code: coupon_code.value,
+  };
+  isLoading.value = true;
+  axios.post(url, { data: coupon }).then((response) => {
+    pushMessage({
+      style: 'success',
+      title: '加入優惠券',
+      content: response.data.message,
+    })
+    getCart();
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '加入優惠券',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const createOrder = () => {
+  isLoading.value = true;
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order`;
+  axios.post(url, { data: form.value }).then((response) => {
+    pushMessage({
+      style: 'success',
+      title: '建立訂單',
+      content: response.data.message,
+    })
+    router.push(`/user/checkout/${response.data.orderId}`);
+    formRef.value.resetForm();
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '建立訂單',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getProducts();
+getCart();
+</script>
+
 <template>
+  <VueLoading :active="isLoading" :z-index="1060" />
   <div class="container">
-    <VueLoading :active="isLoading" :z-index="1060" />
     <div class="mt-4">
       <!-- 產品列表 -->
       <table class="table align-middle">
@@ -50,7 +268,7 @@
           </tr>
         </tbody>
       </table>
-      <!-- 購物車列表 -->
+      <!--購物車列表 -->
       <div class="text-end">
         <button class="btn btn-outline-danger" type="button" @click="deleteAllCarts">
           清空購物車
@@ -115,7 +333,7 @@
     </div>
 
     <div class="my-5 row justify-content-center">
-      <VeeForm ref="form" class="col-md-6" v-slot="{ errors }" @submit="createOrder">
+      <VeeForm ref="formRef" class="col-md-6" v-slot="{ errors }" @submit="createOrder">
         <div class="mb-3">
           <label for="email" class="form-label">Email</label>
           <VeeField id="email" name="email" type="email" class="form-control" :class="{ 'is-invalid': errors['email'] }"
@@ -155,151 +373,3 @@
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  data() {
-    return {
-      products: [],
-      product: {},
-      status: {
-        loadingItem: '',
-      },
-      form: {
-        user: {
-          name: '',
-          email: '',
-          tel: '',
-          address: '',
-        },
-        message: '',
-      },
-      cart: {},
-      isLoading: false,
-      coupon_code: '',
-    };
-  },
-  methods: {
-    getProducts() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/products`;
-      this.isLoading = true;
-      this.$http.get(url).then((response) => {
-        this.products = response.data.products;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    getProduct(id) {
-      this.$router.push(`/user/product/${id}`);
-    },
-    addToCart(id, qty = 1) {
-      this.isLoading = true;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
-      this.status.loadingItem = id;
-      const cart = {
-        product_id: id,
-        qty,
-      };
-
-      this.$http.post(url, { data: cart }).then((response) => {
-        this.status.loadingItem = '';
-        this.isLoading = false;
-        this.$httpMessageState(response, '加入購物車');
-        this.getCart();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    deleteAllCarts() {
-      this.isLoading = true;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/carts`;
-      this.$http.delete(url).then((response) => {
-        this.$httpMessageState(response, '清除購物車');
-        this.getCart();
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '清除購物車');
-      });
-    },
-    getCart() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
-      this.isLoading = true;
-      this.$http.get(url).then((response) => {
-        this.cart = response.data.data;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    removeCartItem(id) {
-      this.status.loadingItem = id;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart/${id}`;
-      this.isLoading = true;
-      this.$http.delete(url).then((response) => {
-        this.$httpMessageState(response, '移除購物車品項');
-        this.status.loadingItem = '';
-        this.isLoading = false;
-        this.getCart();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '移除購物車品項');
-      });
-    },
-    updateCart(data) {
-      this.isLoading = true;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart/${data.id}`;
-      const cart = {
-        product_id: data.product_id,
-        qty: data.qty,
-      };
-
-      this.$http.put(url, { data: cart }).then((response) => {
-        this.$httpMessageState(response, '更新購物車');
-        this.isLoading = false;
-        this.getCart();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '更新購物車');
-      });
-    },
-    addCouponCode() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/coupon`;
-      const coupon = {
-        code: this.coupon_code,
-      };
-      this.isLoading = true;
-      this.$http.post(url, { data: coupon }).then((response) => {
-        this.$httpMessageState(response, '加入優惠券');
-        this.getCart();
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '加入優惠券');
-      });
-    },
-    createOrder() {
-      this.isLoading = true;
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order`;
-      const order = this.form;
-      this.$http.post(url, { data: order }).then((response) => {
-        this.$httpMessageState(response, '建立訂單');
-        this.$router.push(`/user/checkout/${response.data.orderId}`);
-        this.$refs.form.resetForm();
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '建立訂單');
-      });
-    },
-  },
-  created() {
-    this.getProducts();
-    this.getCart();
-  },
-};
-</script>

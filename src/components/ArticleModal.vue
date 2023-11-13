@@ -1,6 +1,54 @@
+<script setup>
+import CKEditor from '@ckeditor/ckeditor5-vue';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { ref, watch } from 'vue';
+
+import useModal from "@/hooks/useModal";
+
+const { openModal, hideModal, modalRef } = useModal()
+
+const CKEditorComponent = CKEditor.component
+
+const props = defineProps({
+  article: Object,
+  isNew: Boolean,
+});
+
+const emits = defineEmits(['update-article']);
+
+const tempArticle = ref({
+  tag: [''],
+});
+const create_at = ref('');
+// 參考：https://ckeditor.com/docs/ckeditor5/latest/builds/guides/integration/frameworks/vuejs-v3.html#editor
+const editorConfig = ref({
+  toolbar: ['heading', 'bold', 'italic', '|', 'link'],
+});
+
+watch(() => props.article, (value) => {
+  tempArticle.value = {
+    ...value,
+    tag: value.tag || [],
+    isPublic: value.isPublic || false,
+  };
+  [create_at.value] = new Date(tempArticle.value.create_at * 1000)
+    .toISOString()
+    .split('T');
+});
+
+watch(() => create_at, (value) => {
+  tempArticle.value.create_at = Math.floor(new Date(value) / 1000);
+});
+
+defineExpose({
+  openModal,
+  hideModal,
+})
+</script>
+
 <template>
   <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true" ref="modal">
+    aria-hidden="true" ref="modalRef">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content border-0">
         <div class="modal-header bg-dark text-white">
@@ -57,7 +105,7 @@
                   placeholder="請輸入文章描述"></textarea>
               </div>
               <div class="mb-3">
-                <ckeditor :editor="editor" :config="editorConfig" v-model="tempArticle.content"></ckeditor>
+                <CKEditorComponent :editor="ClassicEditor" :config="editorConfig" v-model="tempArticle.content"/>
               </div>
               <div class="mb-3">
                 <div class="form-check">
@@ -74,7 +122,7 @@
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
             取消
           </button>
-          <button type="button" class="btn btn-primary" @click="$emit('update-article', tempArticle)">
+          <button type="button" class="btn btn-primary" @click="emits('update-article', tempArticle)">
             確認
           </button>
         </div>
@@ -82,58 +130,6 @@
     </div>
   </div>
 </template>
-<script>
-import modalMixin from '@/mixins/modalMixin';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
-
-export default {
-  props: {
-    article: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    isNew: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  data() {
-    return {
-      status: {},
-      modal: '',
-      tempArticle: {
-        tag: [''],
-      },
-      create_at: 0,
-      // 參考：https://ckeditor.com/docs/ckeditor5/latest/builds/guides/integration/frameworks/vuejs-v3.html#editor
-      editor: ClassicEditor,
-      editorConfig: {
-        toolbar: ['heading', 'typing', 'bold', 'italic', '|', 'link'],
-      },
-    };
-  },
-  mixins: [modalMixin],
-  watch: {
-    article() {
-      this.tempArticle = {
-        ...this.article,
-        tag: this.article.tag || [],
-        isPublic: this.article.isPublic || false,
-      };
-      [this.create_at] = new Date(this.tempArticle.create_at * 1000)
-        .toISOString()
-        .split('T');
-    },
-    create_at() {
-      this.tempArticle.create_at = Math.floor(new Date(this.create_at) / 1000);
-    },
-  },
-  methods: {
-  },
-};
-</script>
 
 <style>
 .ck-editor__editable_inline {

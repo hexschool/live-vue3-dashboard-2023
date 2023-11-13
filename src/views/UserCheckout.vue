@@ -1,3 +1,57 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const route = useRoute();
+
+const orderId = ref(route.params.orderId);
+const order = ref({
+  user: {},
+});
+const isLoading = ref(false);
+
+const getOrder = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order/${orderId.value}`;
+  isLoading.value = true;
+  axios.get(url).then((response) => {
+    order.value = response.data.order;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const payOrder = () => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/pay/${orderId.value}`;
+  isLoading.value = true;
+  axios.post(url).then(() => {
+    isLoading.value = false;
+    getOrder();
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getOrder();
+</script>
+
 <template>
   <VueLoading :active="isLoading" :z-index="1060" />
   <div class="my-5 row justify-content-center">
@@ -56,44 +110,3 @@
     </form>
   </div>
 </template>
-
-<script>
-export default {
-  data() {
-    return {
-      order: {
-        user: {},
-      },
-      orderId: '',
-    };
-  },
-  methods: {
-    getOrder() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/order/${this.orderId}`;
-      this.isLoading = true;
-      this.$http.get(url).then((response) => {
-        this.order = response.data.order;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-    payOrder() {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/pay/${this.orderId}`;
-      this.isLoading = true;
-      this.$http.post(url).then(() => {
-        this.isLoading = false;
-        this.getOrder();
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-  },
-  created() {
-    this.orderId = this.$route.params.orderId;
-    this.getOrder();
-  },
-};
-</script>

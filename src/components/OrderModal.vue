@@ -1,6 +1,34 @@
+<script setup>
+import axios from 'axios';
+
+import { ref, watch } from 'vue';
+
+import useModal from "@/hooks/useModal";
+
+const { openModal, hideModal, modalRef } = useModal()
+
+const props = defineProps({
+  order: Object,
+});
+
+const emits = defineEmits(['update-paid']);
+
+const tempOrder = ref({});
+
+watch(() => props.order, (value) => {
+  tempOrder.value = value;
+})
+
+defineExpose({
+  openModal,
+  hideModal,
+})
+</script>
+
+
 <template>
   <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true" ref="modal">
+    aria-hidden="true" ref="modalRef">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content border-0">
         <div class="modal-header bg-dark text-white">
@@ -104,7 +132,7 @@
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
             取消
           </button>
-          <button type="button" class="btn btn-primary" @click="$emit('update-paid', tempOrder)">
+          <button type="button" class="btn btn-primary" @click="emits('update-paid', tempOrder)">
             修改付款狀態
           </button>
         </div>
@@ -113,34 +141,3 @@
   </div>
 </template>
 
-<script>
-import modalMixin from '@/mixins/modalMixin';
-
-export default {
-  props: {
-    order: {
-      type: Object,
-      default() {
-        return {
-        };
-      },
-    },
-  },
-  data() {
-    return {
-      status: {},
-      modal: '',
-      tempOrder: {},
-      isPaid: false,
-    };
-  },
-  emits: ['update-paid'],
-  mixins: [modalMixin],
-  inject: ['emitter'],
-  watch: {
-    order() {
-      this.tempOrder = this.order;
-    },
-  },
-};
-</script>

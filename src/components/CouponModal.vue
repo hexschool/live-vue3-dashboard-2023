@@ -1,6 +1,42 @@
+<script setup>
+import { ref, watch } from 'vue';
+
+import useModal from "@/hooks/useModal";
+
+const { openModal, hideModal, modalRef } = useModal()
+
+const props = defineProps({
+  coupon: Object,
+  isNew: Boolean,
+});
+
+const emits = defineEmits(['update-coupon']);
+
+const tempCoupon = ref({});
+const due_date = ref('');
+
+watch(() => props.coupon, (value) => {
+  tempCoupon.value = value;
+  // 將時間格式改為 YYYY-MM-DD
+  const dateAndTime = new Date(tempCoupon.value.due_date * 1000)
+    .toISOString().split('T');
+  [due_date.value] = dateAndTime;
+});
+
+watch(() => due_date, (value) => {
+  tempCoupon.value.due_date = Math.floor(new Date(value) / 1000);
+});
+
+defineExpose({
+  openModal,
+  hideModal,
+})
+</script>
+
+
 <template>
   <div class="modal fade" id="couponModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true" ref="modal">
+    aria-hidden="true" ref="modalRef">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -40,7 +76,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" @click="$emit('update-coupon', tempCoupon)"> {{ isNew ? '新增優惠卷' :
+          <button type="button" class="btn btn-primary" @click="emits('update-coupon', tempCoupon)"> {{ isNew ? '新增優惠卷' :
             '更新優惠券' }}
           </button>
         </div>
@@ -48,41 +84,3 @@
     </div>
   </div>
 </template>
-<script>
-import modalMixin from '@/mixins/modalMixin';
-
-export default {
-  props: {
-    coupon: {
-      type: Object,
-      default() {
-        return {};
-      },
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  data() {
-    return {
-      tempCoupon: {},
-      due_date: '',
-    };
-  },
-  emits: ['update-coupon'],
-  watch: {
-    coupon() {
-      this.tempCoupon = this.coupon;
-      // 將時間格式改為 YYYY-MM-DD
-      const dateAndTime = new Date(this.tempCoupon.due_date * 1000)
-        .toISOString().split('T');
-      [this.due_date] = dateAndTime;
-    },
-    due_date() {
-      this.tempCoupon.due_date = Math.floor(new Date(this.due_date) / 1000);
-    },
-  },
-  mixins: [modalMixin],
-};
-</script>

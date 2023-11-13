@@ -1,6 +1,81 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+import useModal from "@/hooks/useModal";
+
+import { ref, watch } from 'vue';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const { openModal, hideModal, modalRef } = useModal()
+
+const props = defineProps({
+  product: Object,
+  isNew: Boolean,
+});
+
+const emits = defineEmits(['update-product']);
+
+const fileInputRef = ref(null);
+
+const tempProduct = ref({});
+const status = ref({
+  fileUploading: false,
+});
+
+watch(() => props.product, (value) => {
+  tempProduct.value = value;
+  if (!tempProduct.value.imagesUrl) {
+    tempProduct.value.imagesUrl = [];
+  }
+  if (!tempProduct.value.imageUrl) {
+    tempProduct.value.imageUrl = '';
+  }
+});
+
+const uploadFile = () => {
+  const uploadedFile = fileInputRef.value.files[0];
+  const formData = new FormData();
+  formData.append('file-to-upload', uploadedFile);
+
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/upload`;
+  status.value.fileUploading = true;
+
+  axios.post(url, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }).then((response) => {
+    status.value.fileUploading = false;
+    tempProduct.value.imageUrl = response.data.imageUrl;
+    fileInputRef.value.value = '';
+    pushMessage({
+      style: 'success',
+      title: '圖片上傳結果',
+      content: response.data.message,
+    })
+  }).catch((error) => {
+    status.value.fileUploading = false;
+    pushMessage({
+      style: 'danger',
+      title: '圖片上傳結果',
+      content: error.response.data.message,
+    })
+  });
+}
+
+defineExpose({
+  openModal,
+  hideModal,
+})
+</script>
+
+
 <template>
   <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-    aria-hidden="true" ref="modal">
+    aria-hidden="true" ref="modalRef">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content border-0">
         <div class="modal-header bg-dark text-white">
@@ -21,7 +96,7 @@
                 <label for="customFile" class="form-label">或 上傳圖片
                   <i class="fas fa-spinner fa-spin" v-if="status.fileUploading"></i>
                 </label>
-                <input type="file" id="customFile" class="form-control" ref="fileInput" @change="uploadFile" />
+                <input type="file" id="customFile" class="form-control" ref="fileInputRef" @change="uploadFile" />
               </div>
               <img class="img-fluid" :src="tempProduct.imageUrl" />
               <!-- 延伸技巧，多圖 -->
@@ -104,7 +179,7 @@
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
             取消
           </button>
-          <button type="button" class="btn btn-primary" @click="$emit('update-product', tempProduct)">
+          <button type="button" class="btn btn-primary" @click="emits('update-product', tempProduct)">
             確認
           </button>
         </div>
@@ -113,75 +188,3 @@
   </div>
 </template>
 
-<script>
-import modalMixin from '@/mixins/modalMixin';
-
-export default {
-  props: {
-    product: {
-      type: Object,
-      default() { return {}; },
-    },
-    isNew: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  data() {
-    return {
-      status: {},
-      modal: '',
-      tempProduct: {},
-    };
-  },
-  emits: ['update-product'],
-  mixins: [modalMixin],
-  inject: ['emitter'],
-  watch: {
-    product() {
-      this.tempProduct = this.product;
-      if (!this.tempProduct.imagesUrl) {
-        this.tempProduct.imagesUrl = [];
-      }
-      if (!this.tempProduct.imageUrl) {
-        this.tempProduct.imageUrl = '';
-      }
-    },
-  },
-  methods: {
-    uploadFile() {
-      const uploadedFile = this.$refs.fileInput.files[0];
-      const formData = new FormData();
-      formData.append('file-to-upload', uploadedFile);
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/admin/upload`;
-      this.status.fileUploading = true;
-      this.$http.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }).then((response) => {
-        this.status.fileUploading = false;
-        if (response.data.success) {
-          this.tempProduct.imageUrl = response.data.imageUrl;
-          this.$refs.fileInput.value = '';
-          this.emitter.emit('push-message', {
-            style: 'success',
-            title: '圖片上傳結果',
-            content: response.data.message,
-          });
-        } else {
-          this.$refs.fileInput.value = '';
-          this.emitter.emit('push-message', {
-            style: 'danger',
-            title: '圖片上傳結果',
-            content: response.data.message,
-          });
-        }
-      }).catch((error) => {
-        this.status.fileUploading = false;
-        this.$httpMessageState(error.response, '圖片失敗');
-      });
-    },
-  },
-};
-</script>

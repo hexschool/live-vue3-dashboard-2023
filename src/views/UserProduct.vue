@@ -1,3 +1,66 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const router = useRouter();
+const route = useRoute();
+
+const id = ref(route.params.productId);
+const product = ref({});
+const isLoading = ref(false);
+
+const getProduct = () => {
+  const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/product/${id.value}`;
+  isLoading.value = true;
+  axios.get(api).then((response) => {
+    product.value = response.data.product;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+const addToCart = (id, qty = 1) => {
+  const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
+  const cart = {
+    product_id: id,
+    qty,
+  };
+  isLoading.value = true;
+  axios.post(url, { data: cart }).then((response) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'success',
+      title: '加入購物車',
+      content: response.data.message,
+    })
+    router.push('/user/cart');
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '加入購物車',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getProduct();
+</script>
+
+
 <template>
   <VueLoading :active="isLoading" :z-index="1060" />
   <div class="container">
@@ -34,47 +97,3 @@
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  data() {
-    return {
-      isLoading: false,
-      product: {},
-      id: '',
-    };
-  },
-  methods: {
-    getProduct() {
-      const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/product/${this.id}`;
-      this.isLoading = true;
-      this.$http.get(api).then((response) => {
-        if (response.data.success) {
-          this.product = response.data.product;
-        }
-        this.isLoading = false;
-      });
-    },
-    addToCart(id, qty = 1) {
-      const url = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/cart`;
-      const cart = {
-        product_id: id,
-        qty,
-      };
-      this.isLoading = true;
-      this.$http.post(url, { data: cart }).then((response) => {
-        this.isLoading = false;
-        this.$httpMessageState(response, '加入購物車');
-        this.$router.push('/user/cart');
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '加入購物車');
-      });
-    },
-  },
-  created() {
-    this.id = this.$route.params.productId;
-    this.getProduct();
-  },
-};
-</script>

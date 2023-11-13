@@ -1,3 +1,13 @@
+<script setup>
+import { computed } from 'vue';
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+const toastMessageStore = useToastMessageStore()
+const { clearToast }  = toastMessageStore
+
+const messages = computed(() => toastMessageStore.messages)
+</script>
+
 <template>
   <div class="toast-container position-fixed pe-3 top-0 end-0" style="z-index: 1500">
     <div v-for="(msg, key) in messages" :key="`toast${key}`" class="toast show" :class="`toast${key}`" role="alert">
@@ -12,40 +22,3 @@
     </div>
   </div>
 </template>
-
-<script>
-import { mapActions, mapState } from 'pinia'
-import { useToastMessageStore } from "@/stores/toastMessage";
-
-export default {
-  // data() {
-  //   return {
-  //     messages: [],
-  //   };
-  // },
-  // inject: ['emitter'],
-  // methods: {
-  //   toastShow() {
-  //     setTimeout(() => {
-  //       this.messages.shift();
-  //     }, 6000);
-  //   },
-  //   clearToast(index) {
-  //     this.messages.splice(index, 1);
-  //   },
-  // },
-  computed: {
-    ...mapState(useToastMessageStore, ['messages'])
-  },
-  methods: {
-    ...mapActions(useToastMessageStore, ['clearToast'])
-  }
-  // mounted() {
-  //   this.emitter.on('push-message', (message) => {
-  //     const { style = 'success', title, content } = message;
-  //     this.messages.push({ style, title, content });
-  //     this.toastShow();
-  //   });
-  // },
-};
-</script>

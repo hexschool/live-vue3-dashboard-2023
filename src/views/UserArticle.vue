@@ -1,4 +1,41 @@
+<script setup>
+import axios from 'axios';
+
+import { useToastMessageStore } from "@/stores/toastMessage";
+
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';  
+
+const toastMessageStore = useToastMessageStore()
+const { pushMessage }  = toastMessageStore
+
+const route = useRoute();
+
+const article = ref({});
+const articleId = ref(route.params.articleId);
+const isLoading = ref(false);
+
+const getArticle = () => {
+  const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/article/${articleId.value}`;
+  isLoading.value = true;
+  axios.get(api).then((response) => {
+    article.value = response.data.article;
+    isLoading.value = false;
+  }).catch((error) => {
+    isLoading.value = false;
+    pushMessage({
+      style: 'danger',
+      title: '錯誤訊息',
+      content: error.response.data.message,
+    })
+  });
+};
+
+getArticle();
+</script>
+
 <template>
+  <VueLoading :active="isLoading" :z-index="1060" />
   <div class="container">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
@@ -23,31 +60,3 @@
     </div>
   </div>
 </template>
-
-<script>
-export default {
-  data() {
-    return {
-      article: {},
-      id: '',
-    };
-  },
-  methods: {
-    getArticle() {
-      const api = `${import.meta.env.VITE_API}/api/${import.meta.env.VITE_PATH}/article/${this.id}`;
-      this.isLoading = true;
-      this.$http.get(api).then((response) => {
-        this.article = response.data.article;
-        this.isLoading = false;
-      }).catch((error) => {
-        this.isLoading = false;
-        this.$httpMessageState(error.response, '錯誤訊息');
-      });
-    },
-  },
-  created() {
-    this.id = this.$route.params.articleId;
-    this.getArticle();
-  },
-};
-</script>

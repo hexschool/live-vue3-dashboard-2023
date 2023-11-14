@@ -32,6 +32,7 @@ import { useToastMessageStore } from "@/stores/toastMessage";
 export default {
   data() {
     return {
+      isLoading: false,
       article: {},
       id: '',
     };

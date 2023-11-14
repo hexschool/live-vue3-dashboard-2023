@@ -4,54 +4,54 @@ const routes = [
   {
     path: '/',
     name: 'Login',
-    component: () => import('../views/UserLogin.vue'),
+    component: () => import('@/views/UserLogin.vue'),
   },
   // DashBoard Pages
   {
     path: '/admin',
-    component: () => import('../views/AdminDashboard.vue'),
+    component: () => import('@/views/AdminDashboard.vue'),
     children: [
       {
         path: 'products',
-        component: () => import('../views/AdminProducts.vue'),
+        component: () => import('@/views/AdminProducts.vue'),
       },
       {
         path: 'orders',
-        component: () => import('../views/AdminOrders.vue'),
+        component: () => import('@/views/AdminOrders.vue'),
       },
       {
         path: 'coupons',
-        component: () => import('../views/AdminCoupons.vue'),
+        component: () => import('@/views/AdminCoupons.vue'),
       },
       {
         path: 'article',
-        component: () => import('../views/AdminArticle.vue'),
+        component: () => import('@/views/AdminArticle.vue'),
       },
     ],
   },
   {
     path: '/user',
-    component: () => import('../views/AdminDashboard.vue'),
+    component: () => import('@/views/AdminDashboard.vue'),
     children: [
       {
         path: 'articles',
-        component: () => import('../views/UserArticles.vue'),
+        component: () => import('@/views/UserArticles.vue'),
       },
       {
         path: 'article/:articleId',
-        component: () => import('../views/UserArticle.vue'),
+        component: () => import('@/views/UserArticle.vue'),
       },
       {
         path: 'cart',
-        component: () => import('../views/UserCart.vue'),
+        component: () => import('@/views/UserCart.vue'),
       },
       {
         path: 'checkout/:orderId',
-        component: () => import('../views/UserCheckout.vue'),
+        component: () => import('@/views/UserCheckout.vue'),
       },
       {
         path: 'product/:productId',
-        component: () => import('../views/UserProduct.vue'),
+        component: () => import('@/views/UserProduct.vue'),
       },
     ],
   },

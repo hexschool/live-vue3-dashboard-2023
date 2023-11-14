@@ -27,7 +27,7 @@ import modalMixin from '@/mixins/modalMixin';
 
 export default {
   props: {
-    item: {},
+    item: Object,
   },
   emits: ['del-item'],
   mixins: [modalMixin],

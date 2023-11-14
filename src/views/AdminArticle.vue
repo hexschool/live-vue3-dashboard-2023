@@ -29,18 +29,10 @@
           </td>
           <td>
             <div class="btn-group">
-              <button
-                class="btn btn-outline-primary btn-sm"
-                type="button"
-                @click="getArticle(article.id)"
-              >
+              <button class="btn btn-outline-primary btn-sm" type="button" @click="getArticle(article.id)">
                 編輯
               </button>
-              <button
-                class="btn btn-outline-danger btn-sm"
-                type="button"
-                @click="openDelArticleModal(article)"
-              >
+              <button class="btn btn-outline-danger btn-sm" type="button" @click="openDelArticleModal(article)">
                 刪除
               </button>
             </div>
@@ -48,12 +40,8 @@
         </tr>
       </tbody>
     </table>
-    <ArticleModal
-      ref="articleModal"
-      :article="tempArticle"
-      :is-new="isNew"
-      @update-article="updateArticle"
-    ></ArticleModal>
+    <ArticleModal ref="articleModal" :article="tempArticle" :is-new="isNew" @update-article="updateArticle">
+    </ArticleModal>
     <DelModal :item="tempArticle" ref="delModal" @del-item="delArticle" />
   </div>
 </template>
